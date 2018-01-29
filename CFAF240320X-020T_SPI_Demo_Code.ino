@@ -31,7 +31,7 @@
 //    https://github.com/SeeedDocument/SeeeduinoV4/raw/master/resources/Seeeduino_v4.2_sch.pdf
 //============================================================================
 //
-//  2017 - 10 - 02 Brent A. Crosby / Crystalfontz
+//
 //
 //===========================================================================
 //This is free and unencumbered software released into the public domain.
