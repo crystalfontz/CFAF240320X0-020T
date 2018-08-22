@@ -1,4 +1,4 @@
-//===========================================================================
+//==============================================================================
 //
 //  Code written for Seeeduino v4.2 set to 3.3v (important!)
 //
@@ -29,11 +29,11 @@
 //  Seeeduino v4.2, an open-source 3.3v capable Arduino clone.
 //    https://www.seeedstudio.com/Seeeduino-V4.2-p-2517.html
 //    https://github.com/SeeedDocument/SeeeduinoV4/raw/master/resources/Seeeduino_v4.2_sch.pdf
-//============================================================================
+//==============================================================================
 //
 //  2017 - 10 - 02 Brent A. Crosby / Crystalfontz
 //
-//===========================================================================
+//==============================================================================
 //This is free and unencumbered software released into the public domain.
 //
 //Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -58,7 +58,7 @@
 //OTHER DEALINGS IN THE SOFTWARE.
 //
 //For more information, please refer to <http://unlicense.org/>
-//============================================================================
+//==============================================================================
 #include <avr/io.h>
 
 #include <SPI.h>
@@ -71,19 +71,19 @@
 
 #include <util/delay.h>
 #include <avr/pgmspace.h>
-//============================================================================
+//==============================================================================
 // DISPLAYS SUPPORTERD BY THIS CODE
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Normal TN TFT Good viewing angle but has a definite inversion direction.
 #define CFAF240320V020T (0)
 // IPS TFT Wide, all viewing angle -- more expensive
 #define CFAF240320W020T (1)
 // O-film TFT Wide angle, no inversion direction, lower cost than IPS
 #define CFAF240320X020T (2)
-//============================================================================
+//==============================================================================
 // CHOOSE YOUR DISPLAY HERE
 #define display CFAF240320X020T
-//============================================================================
+//==============================================================================
 // This code supports a rudimentary touch screen demonstration. There are two
 // portions, the first is a very simple calibration.
 //
@@ -97,7 +97,7 @@
 //
 #define TOUCH_ENABLED 0
 #define FIND_MIN_MAX  0
-//
+
 #if(FIND_MIN_MAX)
   uint16_t Xmin=1023;
   uint16_t Xmax=0;
@@ -110,7 +110,7 @@
   uint16_t Ymin=85;
   uint16_t Ymax=900;
 #endif
-//============================================================================
+//==============================================================================
 // This code can synchronize between two identical demonstration setups.
 // Connect pin 5 of the master to pin 5 of the slave, and pin 6 of the master
 // to pin 6 of the slave. Upload to both, then reset both at the same time.
@@ -135,10 +135,10 @@
   #define SYNC SYNC_NONE
 #endif
 //
-//============================================================================
+//==============================================================================
 // LCD SPI & control lines
 //   ARD      | Port | LCD
-// -----------+------+--------------------------------------------------------
+// -----------+------+----------------------------------------------------------
 //  #5/D5     |  PD5 | SYNC_PIN_SLAVE  (optional -- generally not used)
 //  #6/D6     |  PD6 | SYNC_PIN_MASTER (optional -- generally not used)
 //  #7/D7     |  PD7 | SD_CS    
@@ -152,50 +152,186 @@
 // #24/D15/A1 |  PC1 | Touch XR   (only used on TS modules)
 // #25/D16/A2 |  PC2 | Touch YD   (only used on TS modules)
 // #26/D17/A3 |  PC3 | Touch YU   (only used on TS modules)
-//============================================================================
+//==============================================================================
 //
-#define CLR_RS    (PORTB &= ~(0x01))
-#define SET_RS    (PORTB |=  (0x01))
-#define CLR_RESET (PORTB &= ~(0x02))
-#define SET_RESET (PORTB |=  (0x02))
-#define CLR_CS    (PORTB &= ~(0x04))
-#define SET_CS    (PORTB |=  (0x04))
-#define CLR_MOSI  (PORTB &= ~(0x08))
-#define SET_MOSI  (PORTB |=  (0x08))
-#define CLR_SCK   (PORTB &= ~(0x20))
-#define SET_SCK   (PORTB |=  (0x20))
+#define SPIPORT (PORTB)
+#define SPITOGGLE (PINB)
+// PB0 (0x01) is RS   (output) red    OLED pin 9
+#define SPI_RS_PIN (8)
+#define RS_MASK (0x01)
+#define CLR_RS (SPIPORT &= ~(RS_MASK))
+#define SET_RS (SPIPORT |=  (RS_MASK))
+// PB1 (0x02) is RESET  (output) yellow OLED pin 7
+#define SPI_RESET_PIN (9)
+#define RESET_MASK (0x02)
+#define CLR_RESET (SPIPORT &= ~(RESET_MASK))
+#define SET_RESET (SPIPORT |=  (RESET_MASK))
+// PB2 (0x04) is CS   (output) gray   OLED pin 15
+#define SPI_CS_PIN (10)
+#define CS_MASK (0x04)
+#define CLR_CS  (SPIPORT &= ~(CS_MASK))
+#define SET_CS  (SPIPORT |=  (CS_MASK))
+// PB3 (0x08) is MOSI (output) violet OLED pin 14
+#define SPI_MOSI_PIN (11)
+#define MOSI_MASK (0x08)
+#define CLR_MOSI (SPIPORT &= ~(MOSI_MASK))
+#define SET_MOSI (SPIPORT |=  (MOSI_MASK))
+// PB4 (0x10) is MISO (input)  blue   OLED pin 13
+//(reference only, it is an input)
+#define SPI_MISO_PIN (12)
+#define MISO_MASK (0x10)
+#define CLR_MISO (SPIPORT &= ~(MISO_MASK))
+#define SET_MISO (SPIPORT |=  (MISO_MASK))
+// PB5 (0x20) is CLK  (output) green  OLED pin 12
+#define SPI_CLK_PIN (13)
+#define CLK_MASK (0x20)
+#define CLR_CLK (SPIPORT &= ~(CLK_MASK))
+#define SET_CLK (SPIPORT |=  (CLK_MASK))
 
+// Define the touch pins
 #define TS_XL (14)
 #define TS_XR (15)
 #define TS_YD (16)
 #define TS_YU (17)
+
+//Define the sync pins
 #define SYNC_PIN_MASTER (6)
 #define SYNC_PIN_SLAVE (5)
-//============================================================================
-void SPI_sendCommand(uint8_t command)
-  {
-  // Select the LCD's command register
-  CLR_RS;
+
+//#define SPI3Wire
+#define SPI4Wire
+
+#define FAST_SPI 1
+
+//==============================================================================
+void SPI_sendCommand(uint8_t cmd)
+{
   // Select the LCD controller
   CLR_CS;
   //Send the command via SPI:
-  SPI.transfer(command);
+#ifdef SPI4Wire
+    CLR_RS;
+    SPI.transfer(cmd);
+#endif  
+#ifdef SPI3Wire  
+  SPI_WriteByte(0, cmd);
+#endif
   // Deselect the LCD controller
   SET_CS;
-  }
-//----------------------------------------------------------------------------
+}
+//==============================================================================
 void SPI_sendData(uint8_t data)
-  {
-  // Select the LCD's data register
-  SET_RS;
+{
   // Select the LCD controller
   CLR_CS;
   //Send the data via SPI:
-  SPI.transfer(data);
+#ifdef SPI4Wire
+    SET_RS;
+    SPI.transfer(data);
+#endif  
+#ifdef SPI3Wire  
+  SPI_WriteByte(1, data);
+#endif  
   // Deselect the LCD controller
   SET_CS;
+}
+//==============================================================================
+void SPI_WriteByte(uint8_t reg, uint8_t data)
+  {
+#if FAST_SPI
+  //Pretty fast software SPI 9-bit transfer code
+  //Several ideas taken from the fastest non-assembly implementation at:
+  //http://nerdralph.blogspot.com/2015/03/fastest-avr-software-spi-in-west.html
+  //
+  register uint8_t
+    force_clk_and_data_low;
+
+  //Pre-calculate the value that will drive clk and data low in one cycle.
+  //(Note that this is not interrupt safe if an ISR is writing to the same port)
+  force_clk_and_data_low = (SPIPORT & ~(MOSI_MASK | CLK_MASK) );
+
+  //Start with the clk and data low
+  SPIPORT = force_clk_and_data_low;
+ 
+  //Write the command/data bit
+  if(reg)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+
+  //Now clock the 8 bits of data out.
+  if(data & 0x80)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x40)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x20)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x10)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x08)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x04)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x02)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+  SPIPORT = force_clk_and_data_low;
+  if(data & 0x01)
+    SPITOGGLE = MOSI_MASK;
+  SPITOGGLE = CLK_MASK;
+
+#else // FAST_SPI
+  //Straight-forward software SPI 9-bit transfer code, perhaps
+  //easier to understand, possibly more portable. Certainly slower.
+ 
+  //Write the command/data bit
+  //Set the MOSI pin high or low depending on if our mask
+  //corresponds to a 1 or 0 in the reg.
+  if(reg)
+    {
+    digitalWrite(SPI_MOSI_PIN, HIGH);
+    }
+  else
+    {
+    digitalWrite(SPI_MOSI_PIN, LOW);
+    }
+  //Clock it in.
+  digitalWrite(SPI_CLK_PIN, HIGH);
+  digitalWrite(SPI_CLK_PIN, LOW);
+  
+
+  //(bits 7-0) Push each of the 8 data bits out.
+  for(uint8_t mask=0x80;mask;mask>>=1)
+    {
+    //Set the MOSI pin high or low depending on if our mask
+    //corresponds to a 1 or 0 in the data.
+    if(mask&data)
+      {
+      digitalWrite(SPI_MOSI_PIN, HIGH);
+      }
+    else
+      {
+      digitalWrite(SPI_MOSI_PIN, LOW);
+      }
+    //Clock it in.
+    digitalWrite(SPI_CLK_PIN, HIGH);
+    digitalWrite(SPI_CLK_PIN, LOW);
+    }
+#endif  // FAST_SPI
   }
-//----------------------------------------------------------------------------
+//==============================================================================
 // Defines for the ST7789 registers.
 // ref: https://www.crystalfontz.com/controllers/Sitronix/ST7789V/
 #define ST7789_00_NOP       (0x00)
@@ -278,9 +414,9 @@ void SPI_sendData(uint8_t data)
 #define ST7789_FA_PROMEN    (0xFA)
 #define ST7789_FC_NVMSET    (0xFC)
 #define ST7789_FE_PROMACT   (0xFE)
-//----------------------------------------------------------------------------
+//==============================================================================
 void Initialize_LCD(void)
-  {
+{
   //Reset the LCD controller
   CLR_RESET;
   delay(1);//10µS min
@@ -843,8 +979,8 @@ void Initialize_LCD(void)
   // DISPON (29h): Display On
   SPI_sendCommand(ST7789_29_DISPON);
   delay(1);
-  }
-//============================================================================
+}
+//==============================================================================
 void Set_LCD_for_write_at_X_Y(uint16_t x, uint16_t y)
   {
   //CASET (2Ah): Column Address Set
@@ -876,7 +1012,7 @@ void Set_LCD_for_write_at_X_Y(uint16_t x, uint16_t y)
   //RAMWR (2Ch): Memory Write
   SPI_sendCommand(ST7789_2C_RAMWR); //write data
   }
-//============================================================================
+//==============================================================================
 #if(0) //simple
 void Fill_LCD(uint8_t R, uint8_t G, uint8_t B)
   {
@@ -907,15 +1043,15 @@ void Fill_LCD(uint8_t R, uint8_t G, uint8_t B)
   //Fill display with a given RGB value
   for (i = 0; i < (320UL * 240UL); i++)
     {
-    SPI.transfer(B); //Blue
-    SPI.transfer(G); //Green
-    SPI.transfer(R); //Red
+    SPI_sendData(B); //Blue
+    SPI_sendData(G); //Green
+    SPI_sendData(R); //Red
     }
   // Deselect the LCD controller
   SET_CS;    
   }
 #endif
-//============================================================================
+//==============================================================================
 #if(0) //simple
 void Put_Pixel(uint16_t x, uint16_t y, uint8_t R, uint8_t G, uint8_t B)
   {
@@ -935,52 +1071,42 @@ void Put_Pixel(uint16_t x, uint16_t y, uint8_t R, uint8_t G, uint8_t B)
   //   command comes.
   // * Each value represents one column line in the Frame Memory.
   // * XS [15:0] always must be equal to or less than XE [15:0]
-  // Select the LCD's command register
-  CLR_RS;  
-  SPI.transfer(ST7789_2A_CASET); //Column address set
-  // Select the LCD's data register
-  SET_RS;
+  SPI_sendCommand(ST7789_2A_CASET); //Column address set
   //Write the parameters for the "column address set" command
-  SPI.transfer(x>>8);     //Start MSB = XS[15:8]
-  SPI.transfer(x&0x00FF); //Start LSB = XS[ 7:0]
-  SPI.transfer(0);        //End MSB   = XE[15:8] 240-1
-  SPI.transfer(240);      //End LSB   = XE[ 7:0]
+  SPI_sendData(x>>8);     //Start MSB = XS[15:8]
+  SPI_sendData(x&0x00FF); //Start LSB = XS[ 7:0]
+  SPI_sendData(0);        //End MSB   = XE[15:8] 240-1
+  SPI_sendData(240);      //End LSB   = XE[ 7:0]
   //Write the "row address set" command to the LCD
   //RASET (2Bh): Row Address Set
   // * The value of YS [15:0] and YE [15:0] are referred when RAMWR
   //   command comes.
   // * Each value represents one row line in the Frame Memory.
   // * YS [15:0] always must be equal to or less than YE [15:0]
-  // Select the LCD's command register
-  CLR_RS;  
-  SPI.transfer(ST7789_2B_RASET); //Row address set
-  // Select the LCD's data register
-  SET_RS;
+  SPI_sendCommand(ST7789_2B_RASET); //Row address set
+
   //Use 1st quadrant coordinates: 0,0 is lower left, 239,319 is upper right.
   y=319-y;
   //Write the parameters for the "row address set" command
-  SPI.transfer(y>>8);     //Start MSB = YS[15:8]
-  SPI.transfer(y&0x00FF); //Start LSB = YS[ 7:0]
-  SPI.transfer(0x01);     //End MSB   = YE[15:8] 320-1
-  SPI.transfer(0x3F);     //End LSB   = YE[ 7:0]
+  SPI_sendData(y>>8);     //Start MSB = YS[15:8]
+  SPI_sendData(y&0x00FF); //Start LSB = YS[ 7:0]
+  SPI_sendData(0x01);     //End MSB   = YE[15:8] 320-1
+  SPI_sendData(0x3F);     //End LSB   = YE[ 7:0]
   //Write the "write data" command to the LCD
   //RAMWR (2Ch): Memory Write
-  // Select the LCD's command register
-  CLR_RS;  
-  SPI.transfer(ST7789_2C_RAMWR); //write data
+  SPI_sendCommand(ST7789_2C_RAMWR); //write data
   //Write the single pixel's worth of data
-  // Select the LCD's data register
-  SET_RS;
-  SPI.transfer(B); //Blue
-  SPI.transfer(G); //Green
-  SPI.transfer(R); //Red
+  SPI_sendData(B); //Blue
+  SPI_sendData(G); //Green
+  SPI_sendData(R); //Red
   // Deselect the LCD controller
   SET_CS;
   }
 #endif
-//============================================================================
+//==============================================================================
 // From: http://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-void LCD_Circle(uint16_t x0, uint16_t y0, uint16_t radius, uint16_t R, uint16_t G, uint16_t B)
+void LCD_Circle(uint16_t x0, uint16_t y0, uint16_t radius,
+                uint16_t R, uint16_t G, uint16_t B)
   {
   uint16_t x = radius;
   uint16_t y = 0;
@@ -1015,14 +1141,14 @@ void LCD_Circle(uint16_t x0, uint16_t y0, uint16_t radius, uint16_t R, uint16_t 
       }
     }
   }
-//============================================================================
+//==============================================================================
 #define mSwap(a,b,t)\
   {\
   t=a;\
   a=b;\
   b=t;\
   }\
-//----------------------------------------------------------------------------
+//==============================================================================
 void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1,
                           uint8_t r, uint8_t g, uint8_t b)
   {
@@ -1040,7 +1166,7 @@ void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1,
     x0++;
     }
   }
-//============================================================================
+//==============================================================================
 // From: http://rosettacode.org/wiki/Bitmap/Bresenham's_line_algorithm#C
 void LCD_Line(uint16_t x0, uint16_t y0,
               uint16_t x1, uint16_t y1,
@@ -1092,7 +1218,7 @@ void LCD_Line(uint16_t x0, uint16_t y0,
     Fast_Horizontal_Line(x0, y0, x1,r,g,b);
     }
   }  
-//============================================================================
+//==============================================================================
 // This function transfers data, in one stream. Slightly
 // optimized to do index operations during SPI transfers.
 void SPI_send_pixels(uint8_t byte_count, uint8_t *data_ptr)
@@ -1124,7 +1250,7 @@ void SPI_send_pixels(uint8_t byte_count, uint8_t *data_ptr)
   // Deselect the LCD controller
   SET_CS;
   }
-//----------------------------------------------------------------------------
+//==============================================================================
 void show_BMPs_in_root(void)
   {
   File
@@ -1220,7 +1346,7 @@ void show_BMPs_in_root(void)
   //Release the root directory file handle
   root_dir.close();
   }
-//============================================================================
+//==============================================================================
 #if TOUCH_ENABLED
 uint8_t Read_Touch_Screen(uint16_t *x, uint16_t *y)
   {
@@ -1291,13 +1417,17 @@ uint8_t Read_Touch_Screen(uint16_t *x, uint16_t *y)
     }
   } 
 #endif
-//============================================================================
+//==============================================================================
 void setup()
   {
-  //==========================================================================
+  //debug console
+  Serial.begin(9600);
+  Serial.println("setup()");
+
+  //============================================================================
   // LCD SPI & control lines
   //   ARD      | Port | LCD
-  // -----------+------+------------------------------------------------------
+  // -----------+------+--------------------------------------------------------
   //  #5/D5     |  PD5 | SYNC_PIN_SLAVE  (optional -- generally not used)
   //  #6/D6     |  PD6 | SYNC_PIN_MASTER (optional -- generally not used)
   //  #7/D7     |  PD7 | SD_CS    
@@ -1311,16 +1441,19 @@ void setup()
   // #24/D15/A1 |  PC1 | Touch XR   (only used on TS modules)
   // #25/D16/A2 |  PC2 | Touch YD   (only used on TS modules)
   // #26/D17/A3 |  PC3 | Touch YU   (only used on TS modules)
-  //==========================================================================
-  //Set up port B
-  DDRB |= 0x2F;
+  //============================================================================
+  //Set up ports B & C
+  DDRB = 0x3F;
+  DDRC = 0x0F;
+  PORTB = 0x00;
+  PORTC = 0x00;
 
   //Drive the ports to a reasonable starting state.
   CLR_RESET;
   CLR_RS;
   SET_CS;
   CLR_MOSI;
-  CLR_SCK;
+  CLR_CLK;
 
 #if(SYNC == SYNC_MASTER)
     pinMode(SYNC_PIN_MASTER,OUTPUT);
@@ -1335,17 +1468,12 @@ void setup()
     digitalWrite(SYNC_PIN_SLAVE,LOW);
 #endif
 
-  //Pin 7 is used for the SD card CS.
-  pinMode(7, OUTPUT);
-
-  //debug console
-  Serial.begin(9600);
-  Serial.print("setup()");
-
+#ifdef SPI4Wire
   // Initialize SPI. By default the clock is 4MHz.
   SPI.begin();
   //Bump the clock to 8MHz. Appears to be the maximum.
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
+#endif
 
   //Initialize the LCD controller
   Initialize_LCD();
@@ -1372,16 +1500,21 @@ void setup()
   // Alas, it only improves a full-screen update from a dismally slow
   // time of 1.81 seconds to the nearly hopeless time of 1.35 seconds.
   //
-  if (!SD.begin(7)) 
-    {
-    Serial.println("Card failed to initialize, or not present");
-    }
-  else
-    {
-    Serial.println("Card initialized.");
-    }
+
+// #ifdef SPI4Wire
+//   //Pin 7 is used for the SD card CS.
+//   pinMode(7, OUTPUT);
+//   if (!SD.begin(7)) 
+//    {
+//    Serial.println("Card failed to initialize, or not present");
+//    }
+//   else
+//    {
+//    Serial.println("Card initialized.");
+//    }
+// #endif
   }
-//============================================================================
+//==============================================================================
 void loop()
   {
   uint8_t
@@ -1401,7 +1534,8 @@ void loop()
   uint8_t
     b;
 
-  Fill_LCD(0x00,0x0F,0x00);
+    Serial.println("fill LCD");
+    Fill_LCD(0x00,0xFF,0x00);
   //while(1) show_BMPs_in_root();
 
 #if(TOUCH_ENABLED && FIND_MIN_MAX)
@@ -1493,38 +1627,42 @@ void loop()
     }
 #endif
 
-  //Cheesy lines
-  r=0xff;
-  g=0x00;
-  b=0x80;
-  for(x=0;x<240;x++)
+    //Cheesy lines
+    Serial.println("cheesy lines");
+    r=0xff;
+    g=0x00;
+    b=0x80;
+    for(x=0;x<240;x++)
     {
-    LCD_Line(120,160,
-             x,0,
-             r++,g--,b+=2);
+      LCD_Line(120,160,
+        x,0,
+        r++,g--,b+=2);
     }
-  for(y=0;y<320;y++)
+    for(y=0;y<320;y++)
     {
-    LCD_Line(120,160,
-             239,y,
-             r++,g+=4,b+=2);
+      LCD_Line(120,160,
+        239,y,
+        r++,g+=4,b+=2);
     }
-  for(x=239;0!=x;x--)
+    for(x=239;0!=x;x--)
     {
-    LCD_Line(120,160,
-             x,319,
-             r-=3,g-=2,b-=1);
+      LCD_Line(120,160,
+        x,319,
+        r-=3,g-=2,b-=1);
     }
-  for(y=319;0!=y;y--)
+    for(y=319;0!=y;y--)
     {
-    LCD_Line(120,160,
-             0,y,
-             r+-3,g--,b++);
+      LCD_Line(120,160,
+        0,y,
+        r+-3,g--,b++);
     }
   delay(1000);
 
   //Fill display with a given RGB value
+  Serial.println("fill LCD");
   Fill_LCD(0x00,0x00,0xFF);
+  
+  Serial.println("circles");
   //Draw a cyan circle
   LCD_Circle(120, 120+40, 119,0x00,0xFF,0xFF);
   //Draw a white circle
@@ -1539,7 +1677,10 @@ void loop()
   LCD_Circle(120,  40+40, 28,0xFF,0xA5,0x00);
   delay(1000);
 
+  Serial.println("fill LCD");
   Fill_LCD(0x00,0x00,0x00);
+  
+  Serial.println("expanding circles");
   for(i=2;i<120;i+=2)
     {
     LCD_Circle(i+2, 160, i,i<<2,0xff-(i<<2),0xFF);
@@ -1547,6 +1688,7 @@ void loop()
   delay(1000);
 
   //Write a 16x16 checkerboard
+  Serial.println("Checkerboard");
   for(x=0;x<(240/16);x++)
     {
     for(y=0;y<(320/16);y++)
@@ -1570,8 +1712,9 @@ void loop()
   delay(1000);
   
   //Slideshow of bitmap files on uSD card.
-  show_BMPs_in_root();
+// #ifdef SPI4Wire
+//   show_BMPs_in_root();
+// #endif
 
   } // void loop()
-//============================================================================
-
+//==============================================================================
