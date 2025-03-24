@@ -135,25 +135,24 @@
 #else
   #define SYNC SYNC_NONE
 #endif
-//
-//==============================================================================
+////====================================================================================================
 // LCD SPI & control lines
-//   ARD      | Port | LCD
-// -----------+------+----------------------------------------------------------
-//  #5/D5     |  PD5 | SYNC_PIN_SLAVE  (optional -- generally not used)
-//  #6/D6     |  PD6 | SYNC_PIN_MASTER (optional -- generally not used)
-//  #7/D7     |  PD7 | SD_CS    
-//  #8/D8     |  PB0 | LCD_RS
-//  #9/D9     |  PB1 | LCD_RESET
-// #10/D10    |  PB2 | LCD_CS_NOT (or SPI SS)
-// #11/D11    |  PB3 | LCD_MOSI   (hardware SPI)
-// #12/D12    |  PB4 | not used   (would be MISO)
-// #13/D13    |  PB5 | LCD_SCK    (hardware SPI)
-// #23/D14/A0 |  PC0 | Touch XL   (only used on TS modules)
-// #24/D15/A1 |  PC1 | Touch XR   (only used on TS modules)
-// #25/D16/A2 |  PC2 | Touch YD   (only used on TS modules)
-// #26/D17/A3 |  PC3 | Touch YU   (only used on TS modules)
-//==============================================================================
+//   ARD      | Port |  Carrier Board J1   | LCD
+// -----------|------|---------------------|----------------------------------------------------------
+//  #5/D5     | PD5  |                     | SYNC_PIN_SLAVE  (optional -- generally not used)
+//  #6/D6     | PD6  |                     | SYNC_PIN_MASTER (optional -- generally not used)
+//  #7/D7     | PD7  |                     | SD_CS    
+//  #8/D8     | PB0  | #14 D/C             | LCD_RS
+//  #9/D9     | PB1  | #12 nRST            | LCD_RESET
+// #10/D10    | PB2  | #10 nCS             | LCD_CS_NOT (or SPI SS)
+// #11/D11    | PB3  |  #8 MOSI            | LCD_MOSI   (hardware SPI)
+// #12/D12    | PB4  |  #6 MISO Not Needed | not used   (would be MISO)
+// #13/D13    | PB5  |  #4 SCK             | LCD_SCK    (hardware SPI)
+// #23/D14/A0 | PC0  |  #7 XL              | Touch XL   (only used on TS modules)
+// #24/D15/A1 | PC1  |  #9 XR              | Touch XR   (only used on TS modules)
+// #25/D16/A2 | PC2  | #11 YD              | Touch YD   (only used on TS modules)
+// #26/D17/A3 | PC3  | #13 YU              | Touch YU   (only used on TS modules)
+//====================================================================================================
 //
 #define SPIPORT (PORTB)
 #define SPITOGGLE (PINB)
